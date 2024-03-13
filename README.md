@@ -1,1 +1,1 @@
-# Study Sheet Generator
+# Daily Planner
