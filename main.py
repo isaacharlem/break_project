@@ -4,18 +4,39 @@
 import pandas as pd
 
 
+def check_event_validity(name, start_time, end_time, category = "Event", desc = None, people = None):
+    """Checks the validity of an instance of Event."""
+    if not isinstance(name, str):
+        raise TypeError("Event name must be a string.")
+    if not isinstance(category, str):
+        raise TypeError("Event category must be a string.")
+    if not isinstance(start_time, str):
+        raise TypeError("Event start time must be a string.")
+    if len(start_time) != 4:
+        raise ValueError("Event start time must be in the format 'HHMM'.")
+    if not 0 <= int(start_time[:2]) < 24 or not 0 <= int(start_time[2:4]) < 60:
+        raise ValueError("Event start time must be a valid time.")
+    if not isinstance(end_time, str):
+        raise TypeError("Event end time must be a string.")
+    if len(end_time) != 4:
+        raise ValueError("Event end time must be in the format 'HHMM'.")
+    if not 0 <= int(end_time[:2]) < 24 or not 0 <= int(end_time[2:4]) < 60:
+        raise ValueError("Event end time must be a valid time.")
+    if start_time > end_time:
+        raise ValueError("Event start time must occur before end time.")
+    if desc and not isinstance(desc, str):
+        raise TypeError("Event description must be a string.")
+    if people and not isinstance(people, list):
+        raise TypeError("Event people must be a list of strings.")
+    for person in people:
+        if not isinstance(person, str):
+            raise TypeError("Event people must be a list of strings.")
+
 class Event:
     """Creates an instance of event."""
-    def __init__(self, name, category, start_time, end_time, desc = None, people = None):
+    def __init__(self, name, start_time, end_time, category = "Event", desc = None, people = None):
         """Constructor"""
-        assert isinstance(name, str)
-        assert isinstance(category, str)
-        assert isinstance(start_time, str) # TODO: add checkers for time validity
-        assert isinstance(end_time, str) # TODO: add checkers for time validity
-        if desc:
-            assert isinstance(desc, str)
-        if people:
-            assert isinstance(people, list) # TODO: add checkers for people validity
+        check_event_validity(name, start_time, end_time, category, desc, people)
 
         self.name = name
         self.category = category
@@ -29,13 +50,18 @@ class Event:
         if not self.desc and not self.people:
             return f"Event Name:\n  {self.name}\nCategory:\n  {self.category}\nTime:\n  {self.start_time} - {self.end_time}"
         
-        if not self.desc:
-            return f"Event Name:\n  {self.name}\nCategory:\n  {self.category}\nTime:\n  {self.start_time} - {self.end_time}\nPeople:\n  {[person for person in self.people]}" # TODO: make it list people more legibly
-        
         if not self.people:
             return f"Event Name:\n  {self.name}\nCategory:\n  {self.category}\nTime:\n  {self.start_time} - {self.end_time}\nEvent Description:\n  '{self.desc}'"
         
-        return f"Event Name:\n  {self.name}\nCategory:\n  {self.category}\nTime:\n  {self.start_time} - {self.end_time}\nPeople:\n  {[person for person in self.people]}\nEvent Description:\n  '{self.desc}'"
+        base_string = f"Event Name:\n  {self.name}\nCategory:\n  {self.category}\nTime:\n  {self.start_time} - {self.end_time}\nPeople:\n "
+        for person in self.people[:len(self.people) - 1]:
+            base_string += " " + person + ","
+        base_string += " " + self.people[-1]
+    
+        if not self.desc:
+            return base_string
+        
+        return base_string + f"\nEvent Description:\n  '{self.desc}'"
 
 
 class DailySchedule:
@@ -54,9 +80,10 @@ class DailySchedule:
             base_string = f"On {day_of_week}, {self.date}, you have 1 event:"
             event = "\n\n" + self.schedule[0].__repr__()
             return base_string + event
-
+        
         base_string = f"On {day_of_week}, {self.date}, you have {len(self.schedule)} events:"
-        for event in self.schedule:
+        events = sorted(self.schedule, key=lambda x: x.start_time)
+        for event in events:
             base_string += "\n\n" + event.__repr__()
 
         return base_string
@@ -69,4 +96,3 @@ class DailySchedule:
             event [Event]: an event
         """
         self.schedule.append(event)
-
